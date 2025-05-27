@@ -1,0 +1,14 @@
+Proxy_filename          = x509up
+Proxy_path              = /afs/cern.ch/user/l/lfavilla/private/$(Proxy_filename)
+universe                = vanilla
+x509userproxy           = $(Proxy_path)
+use_x509userproxy       = true
+transfer_input_files    = $(Proxy_path)
++JobFlavour             = "tomorrow"
++JobTag                 = "10649_392363_Endcap_7"
+executable              = /afs/cern.ch/user/l/lfavilla/RPC/analyzer/condor/10649_392363_noNoisyStripsCleaning/Endcap_7/runner.sh
+arguments               = 
+output                  = /afs/cern.ch/user/l/lfavilla/RPC/analyzer/condor/10649_392363_noNoisyStripsCleaning/condor/output/analyzer_10649_392363_Endcap_7.out
+error                   = /afs/cern.ch/user/l/lfavilla/RPC/analyzer/condor/10649_392363_noNoisyStripsCleaning/condor/error/analyzer_10649_392363_Endcap_7.err
+log                     = /afs/cern.ch/user/l/lfavilla/RPC/analyzer/condor/10649_392363_noNoisyStripsCleaning/condor/log/analyzer_10649_392363_Endcap_7.log
+queue

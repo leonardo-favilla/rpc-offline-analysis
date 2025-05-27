@@ -1,0 +1,2 @@
+cp utils/funcs.h /eos/user/l/lfavilla/SWAN_projects/rpc-offline-analysis/common-tuples/utils/funcs.h
+cp utils/openGeomFile.py /eos/user/l/lfavilla/SWAN_projects/rpc-offline-analysis/common-tuples/utils/openGeomFile.py

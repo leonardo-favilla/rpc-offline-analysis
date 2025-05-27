@@ -1,0 +1,10 @@
+*.log
+*.err
+*.out
+!RPCGeometry.out
+*.root
+*.cc
+*.png
+*.pdf
+*.C
+__pycache__
