@@ -75,6 +75,7 @@ lumi_bins                                           = [[i, i + 1000] for i in ra
 # REGIONS #
 histRatesRegions                                    = {}
 fitsRegions                                         = {}
+fitsRegions_band                                    = {}
 for reg in regions:
     hist_rate   = ROOT.TH1F(f"hist_rates_{reg}", f"hist_rates_{reg}", len(lumi_bins), 0, 25000)
     fitFunc     = ROOT.TF1(f"fitFunc_{reg}", "pol1", 9000, 21000)
@@ -93,23 +94,32 @@ for reg in regions:
     histRatesRegions[reg]                           = hist_rate
     fitsRegions[reg]                                = fitFunc
 
-# BACKGROUNDS #
-if False:
-    ratesBackgrounds                                    = {}                        
-    ratesBackgrounds_band                               = {}
-    for bkg in backgrounds:
-        ratesBackgrounds[bkg]                           = ROOT.TF1(f"rate_{bkg}", "pol1", 9000, 21000)
-        ratesBackgrounds[bkg].SetParameter(0, inJson[chamber]["parameters"][bkg]["p0"])
-        ratesBackgrounds[bkg].SetParError(0, inJson[chamber]["parameters"][bkg]["p0_error"])
-        ratesBackgrounds[bkg].SetParameter(1, inJson[chamber]["parameters"][bkg]["p1"])
-        ratesBackgrounds[bkg].SetParError(1, inJson[chamber]["parameters"][bkg]["p1_error"])
-        # ERROR BANDS for backgrounds #
-        XCenters                                        = range(9000, 22000, 1000)
-        YCenters                                        = [ratesBackgrounds[bkg].Eval(x) for x in XCenters]
-        XErrors                                         = [0 for x in XCenters]
-        YErrors                                         = [sqrt(abs((x**2)*inJson[chamber]["parameters"][bkg]["p1_error"]**2 + inJson[chamber]["parameters"][bkg]["p0_error"]**2 + 2*x*inJson[chamber]["parameters"][bkg]["cov_p0p1"])) for x in XCenters]
 
-        ratesBackgrounds_band[bkg]                      = ROOT.TGraphErrors(len(XCenters), array.array("f", XCenters), array.array("f", YCenters), array.array("f", XErrors), array.array("f", YErrors))
+    # ERROR BANDS for regions #
+    XCenters    = range(9000, 22000, 1000)
+    YCenters    = [fitFunc.Eval(x) for x in XCenters]
+    XErrors     = [0 for x in XCenters]
+    YErrors     = [sqrt((x**2)*inJson[chamber]["parameters"][reg]["p1_error"]**2 + inJson[chamber]["parameters"][reg]["p0_error"]**2 + 2*x*inJson[chamber]["parameters"][reg]["covMatrix"][0][1]) for x in XCenters]
+
+    fitsRegions_band[reg] = ROOT.TGraphErrors(len(XCenters), array.array('f', XCenters), array.array('f', YCenters), array.array('f', XErrors), array.array('f', YErrors))
+
+
+# BACKGROUNDS #
+ratesBackgrounds                                    = {}                        
+ratesBackgrounds_band                               = {}
+for bkg in backgrounds:
+    ratesBackgrounds[bkg]                           = ROOT.TF1(f"rate_{bkg}", "pol1", 9000, 21000)
+    ratesBackgrounds[bkg].SetParameter(0, inJson[chamber]["parameters"][bkg]["p0"])
+    ratesBackgrounds[bkg].SetParError(0, inJson[chamber]["parameters"][bkg]["p0_error"])
+    ratesBackgrounds[bkg].SetParameter(1, inJson[chamber]["parameters"][bkg]["p1"])
+    ratesBackgrounds[bkg].SetParError(1, inJson[chamber]["parameters"][bkg]["p1_error"])
+    # ERROR BANDS for backgrounds #
+    XCenters                                        = range(9000, 22000, 1000)
+    YCenters                                        = [ratesBackgrounds[bkg].Eval(x) for x in XCenters]
+    XErrors                                         = [0 for x in XCenters]
+    YErrors                                         = [sqrt(abs((x**2)*inJson[chamber]["parameters"][bkg]["p1_error"]**2 + inJson[chamber]["parameters"][bkg]["p0_error"]**2 + 2*x*inJson[chamber]["parameters"][bkg]["cov_p0p1"])) for x in XCenters]
+
+    ratesBackgrounds_band[bkg]                      = ROOT.TGraphErrors(len(XCenters), array.array("f", XCenters), array.array("f", YCenters), array.array("f", XErrors), array.array("f", YErrors))
 
 
 ### GRAPHIC OPTIONS ###
@@ -220,6 +230,37 @@ CMS.cmsObjectDraw(fitsRegions["BeamAbort"],
 
 
 
+CMS.cmsObjectDraw(fitsRegions_band["Total"],
+                    "E3",
+                    SetFillColor=ROOT.kBlack,
+                    SetFillStyle=3013,
+                    )
+
+CMS.cmsObjectDraw(fitsRegions_band["Colliding"],
+                    "E3",
+                    SetFillColor=ROOT.kGreen,
+                    SetFillStyle=3013,
+                    )
+
+CMS.cmsObjectDraw(fitsRegions_band["NonColliding"],
+                    "E3",
+                    SetFillColor=ROOT.kRed,
+                    SetFillStyle=3013,
+                    )
+
+CMS.cmsObjectDraw(fitsRegions_band["PreBeam"],
+                    "E3",
+                    SetFillColor=ROOT.kBlue,
+                    SetFillStyle=3013,
+                    )
+
+CMS.cmsObjectDraw(fitsRegions_band["BeamAbort"],
+                    "E3",
+                    SetFillColor=ROOT.kViolet,
+                    SetFillStyle=3013,
+                    )
+
+
 
 latex = ROOT.TLatex()
 latex.SetTextFont(52)
@@ -249,7 +290,6 @@ CMS.SaveCanvas(canv, path_C, close=True)
 
 
 
-sys.exit()
 ##########################################################################
 ##### PLOTTING RATES ALL BACKGROUNDS vs. inst.lumi. - Single Chamber #####
 ##########################################################################
