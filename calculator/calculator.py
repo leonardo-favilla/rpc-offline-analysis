@@ -19,13 +19,15 @@ from select_rawIds_in_chamber import select_rawIds_in_chamber
 ############################
 usage               = "python3 calculator.py -f <fill_number> -r <runs_list> -c <chamber>"
 parser              = optparse.OptionParser(usage)
-parser.add_option("-f", "--fill",       dest="fill",    type=int,                           help="Fill number")
-parser.add_option("-r", "--runs",       dest="runs",    type=str,                           help="Runs")
-parser.add_option("-c", "--chamber",    dest="chamber", type=str,                           help="Chamber tag (check 'rpc_name' from '/analyzer/utils/RPCGeometry.out', can also be a wide region). Example: 'RE+4_R3_CH13_C', 'RE+4_R3_CH13' or 'RE+4_R3'")
+parser.add_option("-f", "--fill",       dest="fill",    type=int,                                                   help="Fill number")
+parser.add_option("-r", "--runs",       dest="runs",    type=str,                                                   help="Runs")
+parser.add_option("-c", "--chamber",    dest="chamber", type=str,                                                   help="Chamber tag (check 'rpc_name' from '/analyzer/utils/RPCGeometry.out', can also be a wide region). Example: 'RE+4_R3_CH13_C', 'RE+4_R3_CH13' or 'RE+4_R3'")
+parser.add_option(      "--cleaning",   dest="cleaning",            action="store_true", default=False,             help="Apply noisy strips cleaning (default: False)")
 (opt, args)         = parser.parse_args()
 fill_number         = opt.fill
 runs_list           = list(map(int, opt.runs.split(",")))
 chamber             = opt.chamber
+cleaning            = opt.cleaning
 
 
 
@@ -35,9 +37,13 @@ GeometryFile_path   = "/afs/cern.ch/" + workdir + "/" + inituser + "/" + usernam
 collidingFile       = "/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + f"/rpc-offline-analysis/analyzer/utils/lhc_schemes/Fill_{fill_number}/colliding_{fill_number}.txt"
 regions             = ["Total", "Colliding", "NonColliding", "PreBeam", "BeamAbort"]
 backgrounds         = ["Inclusive", "Delayed", "Prompt"]
-
-inJson_path         = f"/eos/user/l/lfavilla/rpc-offline-analysis/common-tuples-results/{fill_number}/{'_'.join((map(str, runs_list)))}/partial_results_{fill_number}_{'_'.join(map(str, runs_list))}_withNoisyStripsCleaning.json"
-outJson_path        = f"/eos/user/l/lfavilla/rpc-offline-analysis/common-tuples-results/{fill_number}/{'_'.join((map(str, runs_list)))}/final_results_{fill_number}_{'_'.join(map(str, runs_list))}_withNoisyStripsCleaning.json"
+if cleaning:
+    cleaning_suffix = "_withNoisyStripsCleaning"
+else:
+    cleaning_suffix = "_noNoisyStripsCleaning"
+    
+inJson_path         = f"/eos/user/l/lfavilla/rpc-offline-analysis/common-tuples-results/{fill_number}/{'_'.join((map(str, runs_list)))}/partial_results_{fill_number}_{'_'.join(map(str, runs_list))}{cleaning_suffix}.json"
+outJson_path        = f"/eos/user/l/lfavilla/rpc-offline-analysis/common-tuples-results/{fill_number}/{'_'.join((map(str, runs_list)))}/final_results_{fill_number}_{'_'.join(map(str, runs_list))}{cleaning_suffix}.json"
 
 
 if fill_number in fillsDict:
@@ -128,7 +134,7 @@ outJson[chamber] = {
                         "rates":        ratesRegions,
                         "parameters":   fitResultsRegions | ratesBackgrounds_parameters,
                     }
-print(outJson[chamber])
+# print(outJson[chamber])
 
 with open(outJson_path, "w") as f:
     json.dump(outJson, f, indent=4)

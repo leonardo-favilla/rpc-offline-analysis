@@ -6,9 +6,17 @@ from tqdm import tqdm
 import time
 import shutil
 from getUser import inituser, username, uid, workdir
+import optparse
 
-fill                    = 9606
-runs                    = "380470"
+usage                   = "python3 calculator_runner.py -f <fill_number> -r <runs_list>"
+parser                  = optparse.OptionParser(usage)
+parser.add_option("-f", "--fill",       dest="fill",                                                        type=int,   help="Fill number")
+parser.add_option("-r", "--runs",       dest="runs",                                                        type=str,   help="Runs list, in the form run1,run2,run3")
+parser.add_option(      "--cleaning",   dest="cleaning",            action="store_true", default=False,                 help="Apply noisy strips cleaning (default: False)")
+(opt, args)             = parser.parse_args()
+fill                    = opt.fill
+runs                    = opt.runs
+cleaning                = opt.cleaning
 GeometryFile_path       = "/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + "/rpc-offline-analysis/analyzer/utils/RPCGeometry.out"
 
 
@@ -68,23 +76,29 @@ for d in disks:
 
 
 # Run the calculator.py script for each chamber #
-if False:
+if True:
     t0 = time.time()
     print(f"Analyzing SINGLE roll chambers:                     {len(chambers_singleRoll)}")
     print(f"Starting at:                                        {time.strftime('%H:%M:%S', time.localtime(t0))}")
     for i, chamber in enumerate(chambers_singleRoll):
         print_progress_bar(i, len(chambers_singleRoll), chamber)
-        result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
+        if cleaning:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber, "--cleaning"], text=True, capture_output=True)
+        else:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
     tf = time.time()
     print(f" Time elapsed to analyze SINGLE roll chambers:       {tf-t0}")
 
-if False:
+if True:
     t0 = time.time()
     print(f"Analyzing MULTI roll BARREL chambers:               {len(chambers_multiRoll_Barrel)}")
     print(f"Starting at:                                        {time.strftime('%H:%M:%S', time.localtime(t0))}")
     for i, chamber in enumerate(chambers_multiRoll_Barrel):
         print_progress_bar(i, len(chambers_multiRoll_Barrel), chamber)
-        result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
+        if cleaning:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber, "--cleaning"], text=True, capture_output=True)
+        else:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
     tf = time.time()
     print(f" Time elapsed to analyze MULTI roll BARREL chambers: {tf-t0}")
 
@@ -94,7 +108,10 @@ if True:
     print(f"Starting at:                                        {time.strftime('%H:%M:%S', time.localtime(t0))}")
     for i, chamber in enumerate(chambers_multiRoll_Endcap):
         print_progress_bar(i, len(chambers_multiRoll_Endcap), chamber)
-        result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
+        if cleaning:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber, "--cleaning"], text=True, capture_output=True)
+        else:
+            result = subprocess.run(["python3", "calculator.py", "-f", str(fill), "-r", runs, "-c", chamber], text=True, capture_output=True)
     tf = time.time()
     print(f" Time elapsed to analyze MULTI roll ENDCAP chambers: {tf-t0}")
 

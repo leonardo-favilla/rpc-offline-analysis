@@ -51,7 +51,10 @@ dt                  = 25e-9 # 25ns
 bxIds               = list(range(3564))
 rpc_bx_windowFile   = "/afs/cern.ch/user/" + inituser + "/" + username + "/rpc-offline-analysis/analyzer/utils/rpc_bx_window.txt"
 GeometryFile_path   = "/afs/cern.ch/user/" + inituser + "/" + username + "/rpc-offline-analysis/analyzer/utils/RPCGeometry.out"
-file_list           = [f"{folder}{file}" for folder in file_folders for file in os.listdir(folder) if ".root" in file]
+if file_folders:
+    file_list       = [f"{folder}{file}" for folder in file_folders for file in os.listdir(folder) if ".root" in file]
+else:
+    file_list       = fillsDict[fill_number].files
 # Multi-Threading #
 if enable_MT:
     ROOT.EnableImplicitMT()

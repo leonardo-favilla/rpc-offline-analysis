@@ -5,20 +5,23 @@ import time
 sys.path.append('../')
 from getUser import inituser, username, uid, workdir # here you can find username, inituser, uid, workdir
 
-usage           = "python3 analyzer_submitter.py -f <fill_number> -r <runs_list>" # --dryrun if you want to test the script without submitting jobs, --noisy_cleaning if you want Noisy Strips cleaning
+usage           = "python3 analyzer_submitter.py -f <fill_number> -r <runs_list>" # --dryrun if you want to test the script without submitting jobs, --cleaning if you want Noisy Strips cleaning
 parser          = optparse.OptionParser(usage)
 parser.add_option("-f", "--fill",           dest="fill",            type=int,                                   help="Fill number")
 parser.add_option("-r", "--runs",           dest="runs",            type=str,                                   help="Runs")
-parser.add_option("-n", "--noisy_cleaning", dest="noisy_cleaning",  default=False,      action="store_true",    help="Default do not clean noisy strips")
+parser.add_option("-n", "--cleaning",       dest="cleaning",        default=False,      action="store_true",    help="Default do not clean noisy strips")
 parser.add_option("-d", "--dryrun",         dest="dryrun",          default=False,      action="store_true",    help="Default do not run")
 (opt, args)     = parser.parse_args()
 
 
 fill            = opt.fill
 runs            = list(map(int, opt.runs.split(",")))
-noisy_cleaning  = opt.noisy_cleaning
+cleaning        = opt.cleaning
 dryrun          = opt.dryrun
-
+if cleaning:
+    cleaning_suffix     = "_withNoisyStripsCleaning"
+else:
+    cleaning_suffix     = "_noNoisyStripsCleaning"
 
 os.popen("cp /tmp/x509up_u" + str(uid) + " /afs/cern.ch/user/" + inituser + "/" + username + "/private/x509up")
 
@@ -34,7 +37,7 @@ def sub_writer(run_folder, log_folder, fill, runs, detector_region):
     f.write("transfer_input_files    = $(Proxy_path)\n")
     # f.write("transfer_output_remaps  = \""+outname+"_Skim.root=root://eosuser.cern.ch///eos/user/"+inituser + "/" + username+"/DarkMatter/topcandidate_file/"+dat_name+"_Skim.root\"\n")
     # f.write('requirements            = (TARGET.OpSysAndVer =?= "CentOS7")\n')
-    f.write("+JobFlavour             = \"tomorrow\"\n") # options are espresso = 20 minutes, microcentury = 1 hour, longlunch = 2 hours, workday = 8 hours, tomorrow = 1 day, testmatch = 3 days, nextweek = 1 week
+    f.write("+JobFlavour             = \"testmatch\"\n") # options are espresso = 20 minutes, microcentury = 1 hour, longlunch = 2 hours, workday = 8 hours, tomorrow = 1 day, testmatch = 3 days, nextweek = 1 week
     f.write('+JobTag                 = "'+str(fill)+"_"+"_".join(map(str, runs))+"_"+str(detector_region)+'"\n')
     f.write("executable              = "+run_folder+"runner.sh\n")
     f.write("arguments               = \n")
@@ -56,10 +59,7 @@ def runner_writer(run_folder, fill, runs, detector_region, collidingFile, outJso
 
 
 condor_folder           = "/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + "/rpc-offline-analysis/analyzer/condor/"
-if noisy_cleaning:
-    condor_subfolder    = condor_folder + str(fill) + "_" + "_".join((map(str, runs))) + "_withNoisyStripsCleaning" + "/"
-else:
-    condor_subfolder    = condor_folder + str(fill) + "_" + "_".join((map(str, runs))) + "_noNoisyStripsCleaning" + "/"
+condor_subfolder        = condor_folder + str(fill) + "_" + "_".join((map(str, runs))) + cleaning_suffix + "/"
 log_folder              = condor_subfolder + "condor/"
 if not os.path.exists(condor_folder):
     os.makedirs(condor_folder)
@@ -70,7 +70,12 @@ if not os.path.exists(condor_subfolder):
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
     print(f"Creating log folder:        {log_folder}")
-
+if not os.path.exists(log_folder+"output/"):
+    os.makedirs(log_folder+"output/")
+if not os.path.exists(log_folder+"error/"):
+    os.makedirs(log_folder+"error/")
+if not os.path.exists(log_folder+"log/"):
+    os.makedirs(log_folder+"log/")
 
 
 
@@ -81,7 +86,7 @@ if not os.path.exists("/tmp/x509up_u" + str(uid)):
 
 ######## LAUNCH CONDOR ########
 collidingFile        = f"/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + f"/rpc-offline-analysis/analyzer/utils/lhc_schemes/Fill_{fill}/colliding_{fill}.txt"
-if noisy_cleaning:
+if cleaning:
     # noisyStripsFile  = f"/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + f"/rpc-offline-analysis/analyzer/utils/noisy_files/Fill_{fill}/All_Noisy_strips_ID.txt"
     noisyStripsFile  = f"/afs/cern.ch/" + workdir + "/" + inituser + "/" + username + f"/rpc-offline-analysis/analyzer/utils/noisy_files/Fill_{fill}/All_Dead_and_Noisy_strips_ID.txt"
     print(f"Cleaning noisy strips using: {noisyStripsFile}")
@@ -131,10 +136,7 @@ for detector_region in detector_regions:
     outFolder_path          = "/eos/user/l/lfavilla/rpc-offline-analysis/common-tuples-results/"+str(fill)+"/"
     outSubFolder_path       = outFolder_path+"_".join((map(str, runs)))+"/"
     outSubSubFolder_path    = outSubFolder_path+"partial_results/"
-    if noisy_cleaning:
-        outJson_path        = outSubSubFolder_path+f"partial_results_{fill}_{'_'.join((map(str, runs)))}_{detector_region}_withNoisyStripsCleaning.json"
-    else:
-        outJson_path        = outSubSubFolder_path+f"partial_results_{fill}_{'_'.join((map(str, runs)))}_{detector_region}_noNoisyStripsCleaning.json"
+    outJson_path            = outSubSubFolder_path+f"partial_results_{fill}_{'_'.join((map(str, runs)))}_{detector_region}{cleaning_suffix}.json"
     run_folder              = condor_subfolder + detector_region + "/"
     if not os.path.exists(run_folder):
         os.makedirs(run_folder)
@@ -148,12 +150,7 @@ for detector_region in detector_regions:
     if not os.path.exists(outSubSubFolder_path):
         os.makedirs(outSubSubFolder_path)
         print(f"Creating out sub-subfolder: {outSubSubFolder_path}")
-    if not os.path.exists(log_folder+"output/"):
-        os.makedirs(log_folder+"output/")
-    if not os.path.exists(log_folder+"error/"):
-        os.makedirs(log_folder+"error/")
-    if not os.path.exists(log_folder+"log/"):
-        os.makedirs(log_folder+"log/")
+
 
 
     runner_writer(run_folder, fill, runs, detector_region, collidingFile, outJson_path, noisyStripsFile)
