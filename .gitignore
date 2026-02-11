@@ -8,3 +8,4 @@
 *.pdf
 *.C
 __pycache__
+condor*/
