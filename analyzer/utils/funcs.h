@@ -21,8 +21,8 @@ ROOT::RVec<int> rpcRechHit_isNoisy(ROOT::RVec<int> ids_rpcRecHit_rawId, ROOT::RV
     for (int i = 0; i<ids_rpcRecHit_rawId.size(); i++)
     {
         int idx                 = ids_rpcRecHit_rawId[i];
-        int firstClusterStrip   = rpcRecHit_firstClusterStrip[i];
-        int clusterSize         = rpcRecHit_clusterSize[i];
+        int firstClusterStrip   = rpcRecHit_firstClusterStrip[idx];
+        int clusterSize         = rpcRecHit_clusterSize[idxs];
         int lastClusterStrip    = firstClusterStrip + clusterSize - 1;
         int isNoisy_            = 0;
         for (int strip = firstClusterStrip; strip <= lastClusterStrip; strip++)

@@ -40,5 +40,6 @@ with open(outNoiseFilePath, "w") as outNoiseFile:
             for chamberTag,rawId in zip(chamberTag_list,rawId_list):
                 dead_strip_list  = [s.split("_")[1] for s in inJson[chamberTag]["dead_strips"]]
                 noisy_strip_list = [s.split("_")[1] for s in inJson[chamberTag]["noisy_strips"]]
-                line             = ",".join([str(rawId)] + dead_strip_list + noisy_strip_list)
+                diff_noisy_strip_list = [s.split("_")[1] for s in inJson[chamberTag]["diff_noisy_strips"]]
+                line             = ",".join([str(rawId)] + dead_strip_list + noisy_strip_list + diff_noisy_strip_list)
                 outNoiseFile.write(line + "\n")
